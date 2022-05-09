@@ -20,24 +20,16 @@ from qiskit.algorithms.optimizers import COBYLA, L_BFGS_B, NELDER_MEAD
 from qiskit_machine_learning.kernels.algorithms import QuantumKernelTrainer
 from qiskit_machine_learning.kernels import QuantumKernel
 from qiskit_machine_learning.algorithms import QSVC
-#from qiskit_machine_learning.algorithms import NeuralNetworkClassifier
-
 from .base_classifier_benchmark import DATASET_SYNTHETIC_CLASSIFICATION, DATASET_IRIS_CLASSIFICATION
-
-
-
-
 from .qk_base_benchmark import QKernelBaseClassifierBenchmark
-
 
 class QKernelFitBenchmarks(QKernelBaseClassifierBenchmark):
     """QuantumKernel and QuantumKernelTraining fit benchmarks."""
-
     version = 2
     timeout = 1200.0
     params = (
         # Only the synthetic dataset now
-        [DATASET_SYNTHETIC_CLASSIFICATION, DATASET_IRIS_CLASSIFICATION],
+        [DATASET_SYNTHETIC_CLASSIFICATION],
         ["qasm_simulator", "statevector_simulator"],
          ["QuantumKernel", "QuantumKernelTraining" ],
         ["cobyla", "nelder-mead", "l-bfgs-b"],
@@ -76,6 +68,7 @@ class QKernelFitBenchmarks(QKernelBaseClassifierBenchmark):
             self.model = self._construct_QuantumKernel_classical_classifier(quantum_instance_name= quantum_instance_name, 
                                                             optimizer = optimizer,
                                                             num_qubits = n_qubits) #this is just a kernel matrix
+            
         elif technique == "QuantumKernelTraining":
             self.model = self._construct_QuantumKernelTrainer(quantum_instance_name= quantum_instance_name, 
                                                             optimizer= optimizer, 
