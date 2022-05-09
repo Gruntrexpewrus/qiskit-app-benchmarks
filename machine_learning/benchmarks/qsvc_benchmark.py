@@ -107,7 +107,7 @@ class QsvcBenchmark(QsvcBaseClassifierBenchmark):
 
     def time_predict_qsvc_classifier(self, _, __):
         """Time predicting with qsvc."""
-        self.model).predict(self.train_features)
+        self.model.predict(self.train_features)
 
     def track_accuracy_score_qsvc_classifier(self, _, __):
         """Tracks the overall accuracy of the classification results."""
