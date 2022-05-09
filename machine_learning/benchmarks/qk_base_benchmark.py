@@ -15,6 +15,7 @@ from abc import ABC
 from typing import Optional
 
 from qiskit.algorithms.optimizers import Optimizer
+from qiskit.circuit import ParameterVector, Parameter
 from qiskit.circuit.library import ZZFeatureMap
 from qiskit_machine_learning.kernels import QuantumKernel
 from qiskit_machine_learning.kernels.algorithms import QuantumKernelTrainer
@@ -22,15 +23,13 @@ from qiskit_machine_learning.algorithms import QSVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, FunctionTransformer
 from qiskit import QuantumCircuit
-from qiskit.circuit import ParameterVector
 import numpy as np
-
+from qiskit.utils import algorithm_globals
 from .base_classifier_benchmark import BaseClassifierBenchmark
 
 
 class QKernelBaseClassifierBenchmark(BaseClassifierBenchmark, ABC):
     """Base class for quantum kernel benchmarks."""
-
     def __init__(self) -> None:
         reshaper = FunctionTransformer(lambda x: x.reshape(-1, 1))
         encoder = OneHotEncoder(sparse=False)
@@ -40,15 +39,12 @@ class QKernelBaseClassifierBenchmark(BaseClassifierBenchmark, ABC):
             iris_label_encoder=Pipeline([("reshape", reshaper), ("one hot", encoder)]),
         )
         
-    #I just build 1 function for method, I don't want to differentiate datasets
     def _construct_QuantumKernel_classical_classifier(self,                                             
         quantum_instance_name: str,
-        optimizer: Optional[Optimizer] = None,
         method = "quantumclassical", #do not modify
         num_qubits = 1, ) -> QuantumKernel:
         """This method just create the matrix from the quantum kernel. Later will be applied the classical SVC"""
         kernelmatrix = self._construct_QuantumKernel(num_qubits, quantum_instance_name, method)
-        #put here the function calling the quantum kernel matrix (Quantum Kernel)
         return kernelmatrix
     
     def _construct_QuantumKernelTrainer(self,
@@ -59,10 +55,8 @@ class QKernelBaseClassifierBenchmark(BaseClassifierBenchmark, ABC):
         num_qubits = 1,) -> QuantumKernelTrainer:
         """This method returns the QuantumKernelTrainer"""
         kernel = self._construct_QuantumKernel(num_qubits, quantum_instance_name, method)
-        optimizer = optimizer #eg L_BFGS_B(maxiter=20) but we need also learning rate, perturbation etc.
-        # Instantiate a quantum kernel trainer.
-        #look up how to put random initial parameters, seems simple just check
-        qkt = QuantumKernelTrainer(quantum_kernel=kernel, loss=loss_function, optimizer = optimizer, initial_point=[np.pi / 2]) #initial random point
+        optimizer = optimizer 
+        qkt = QuantumKernelTrainer(quantum_kernel=kernel, loss=loss_function, optimizer = optimizer, initial_point=[np.pi / 2]) 
         return qkt #use the QuantumKernel to return the classifier method
     
     def _construct_QuantumKernel(
@@ -72,14 +66,11 @@ class QKernelBaseClassifierBenchmark(BaseClassifierBenchmark, ABC):
         method: str,
     ) -> QuantumKernel:
         """Construct a QuantumKernel"""
-        #here we can consider to add functions to be called for the kind of ansatz
-        # or the ansatz as input here whatever
-        #we should also personalize the parameters in the quantum method
         if method == "quantumclassical":
             feature_map = ZZFeatureMap(num_inputs, reps=2, entanglement="linear")
             #quantum kernel, not parametrized
-            qk = QuantumKernel(feature_map=feature_map, quantum_instance=self.backends[quantum_instance_name])
-            return qk
+            qkernel = QuantumKernel(feature_map=feature_map, quantum_instance=self.backends[quantum_instance_name])
+            return qkernel
         elif method == "quantum":
             #super dumb parametrized start
             #<<<<<<<<<<<<<<<<< any number of qubits
@@ -89,8 +80,7 @@ class QKernelBaseClassifierBenchmark(BaseClassifierBenchmark, ABC):
                 fm0.ry(user_params[0], i)
             fm1 = ZZFeatureMap(num_inputs, reps=2, entanglement="linear")
             feature_map = fm0.compose(fm1)
-            #quantum kernel, parametrized
-            qk = QuantumKernel(feature_map = feature_map, user_parameters=user_params, quantum_instance=self.backends[quantum_instance_name])
-            return qk
+            qkernel = QuantumKernel(feature_map = feature_map, user_parameters=user_params, quantum_instance=self.backends[quantum_instance_name])
+            return qkernel
         else:
             return ValueError(f"Unsupported method: {method}")
